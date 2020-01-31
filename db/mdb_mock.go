@@ -1,8 +1,19 @@
-package app
+package db
 
 import (
 	"gopkg.in/mgo.v2/bson"
 )
+
+func MockMdb() *DBCollections {
+	mockSession := NewMockSession()
+	mockdb := mockSession.DB("")
+
+	mockTbl := &DBCollections{}
+	mockTbl.Users = mockdb.C(users)
+	mockTbl.Ratings = mockdb.C(ratings)
+
+	return mockTbl
+}
 
 type (
 	// MockSession satisfies Session and act as a mock of *mgo.session.
@@ -28,19 +39,6 @@ type (
 		pipe       []bson.M
 	}
 )
-
-func mockMdb() *DBCollections {
-	mockSession := NewMockSession()
-	mockdb := mockSession.DB("")
-
-	mockTbl := &DBCollections{}
-
-	mockTbl.Venues = mockdb.C(venues)
-	mockTbl.Showtimes = mockdb.C(showtimes)
-	mockTbl.Categories = mockdb.C(categories)
-
-	return mockTbl
-}
 
 // NewMockSession mock NewSession.
 func NewMockSession() Session {

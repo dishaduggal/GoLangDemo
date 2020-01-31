@@ -1,16 +1,13 @@
 package main
 
 import (
-	"bms-movies/app"
-	"bms-movies/server"
 	"log"
+	"user-ratings/initialize"
 )
 
 func main() {
-
-	err := app.Initialize()
+	err := initialize.Init()
 	if err != nil {
 		log.Fatalf("App could not start %s", err)
 	}
-	server.InitializeServer()
 }

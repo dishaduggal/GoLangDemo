@@ -1,4 +1,4 @@
-package app
+package db
 
 import (
 	"log"
@@ -7,17 +7,15 @@ import (
 )
 
 const (
-	venues       = "venues"
-	showtimes    = "showtimes"
-	categories   = "categories"
-	databaseName = "moviesDemo"
+	users        = "users"
+	ratings      = "ratings"
+	databaseName = "users"
 )
 
 // DBCollections contains all collections of the database
 type DBCollections struct {
-	Venues     Collection
-	Showtimes  Collection
-	Categories Collection
+	Users   Collection
+	Ratings Collection
 }
 
 // GlobalSession for mongo connection
@@ -27,7 +25,7 @@ var (
 )
 
 // initializeMongo func to connect to mongoDB
-func initializeMongo() (tbl *DBCollections, err error) {
+func InitializeMongo() (tbl *DBCollections, err error) {
 
 	// create a global connection if it does not exist
 	if GlobalSession == nil {
@@ -41,16 +39,15 @@ func initializeMongo() (tbl *DBCollections, err error) {
 	}
 
 	//Simple example of an anonymous function which initializes
-	//all collections in the movies database
+	//all collections in the users database
 	initializeCollections := func() *DBCollections {
 		mgoSession := GlobalSession.Copy()
 		session := MongoSession{mgoSession}
 		database := session.DB(databaseName)
 
 		tbl := &DBCollections{}
-		tbl.Venues = database.C(venues)
-		tbl.Showtimes = database.C(showtimes)
-		tbl.Categories = database.C(categories)
+		tbl.Users = database.C(users)
+		tbl.Ratings = database.C(ratings)
 		return tbl
 	}
 	return initializeCollections(), nil

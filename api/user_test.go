@@ -1,16 +1,16 @@
-package controllers
+package api
 
 import (
-	"bms-movies/app"
 	"github.com/labstack/echo"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"user-ratings/modules/utils"
 )
 
-func TestLogout(t *testing.T) {
+func TestGetUserRatings(t *testing.T) {
 	// mock complete context
 	app.MockCtx()
 
@@ -27,12 +27,12 @@ func TestLogout(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			e := echo.New()
-			e.Validator = &CustomValidator{}
+			e.Validator = &utils.CustomValidator{}
 			req := httptest.NewRequest("", tc.req, strings.NewReader(""))
 			rec := httptest.NewRecorder()
 			echoCtx := e.NewContext(req, rec)
 
-			GetShowTimes(echoCtx)
+			GetUserRatings(echoCtx)
 
 			res := rec.Result()
 			defer res.Body.Close()

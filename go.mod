@@ -1,4 +1,4 @@
-module bms-movies
+module user-ratings
 
 go 1.13
 
