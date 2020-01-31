@@ -17,9 +17,9 @@ type (
 		VenueId string `query:"venueId" valid:"required"`
 	}
 	ResponseMovieListing struct {
-		VenueName    string  `json:"venueName"`
-		AllowParking bool    `json:"allowParking"`
-		Shows        []Shows `json:"shows"`
+		VenueName    string          `json:"venueName"`
+		AllowParking bool            `json:"allowParking"`
+		Shows        []ResponseShows `json:"shows"`
 	}
 	CtxShowDetails struct {
 		Wg       sync.WaitGroup
@@ -32,15 +32,18 @@ type (
 		Name         string `bson:"name"`
 		AllowParking bool   `bson:"allowParking"`
 	}
-	ShowsData struct {
-		ID    string `bson:"venueId"`
-		Shows Shows  `bson:"shows"`
+
+	ResponseShows struct {
+		ShowDate   time.Time    `json:"showDate"`
+		FilmName   string       `json:"movieName"`
+		Categories []Categories `json:"categories"`
 	}
+
 	Shows struct {
 		ID         string    `bson:"id"`
 		ShowDate   time.Time `bson:"showDate"`
 		FilmName   string    `bson:"filmName"`
-		Categories []string  `bson:"showDate"`
+		Categories []int     `bson:"showDate"`
 	}
 
 	Categories struct {
@@ -65,6 +68,7 @@ func (ctx *CtxShowDetails) GetCinemaDetails() error {
 	queryVenues := bson.M{"id": ctx.Request.VenueId}
 	err := app.Ctx.DB.Venues.Find(queryVenues).One(&venue)
 	if err != nil {
+		ctx.Error <- err
 		return err
 	}
 	ctx.Response.VenueName = venue.Name
@@ -72,16 +76,45 @@ func (ctx *CtxShowDetails) GetCinemaDetails() error {
 	return nil
 }
 
-func (ctx *CtxShowDetails) GetShowTimes(categories chan int) error {
-	shows := Shows{}
-	queryVenues := bson.M{"venueId": ctx.Request.VenueId}
-	err := app.Ctx.DB.Venues.Find(queryVenues).One(&shows)
+func (ctx *CtxShowDetails) GetShowTimes(categoryIDS chan int) error {
+	shows := []Shows{}
+	queryShows := bson.M{"venueId": ctx.Request.VenueId}
+	err := app.Ctx.DB.Venues.Find(queryShows).One(&shows)
 	if err != nil {
+		ctx.Error <- err
 		return err
 	}
-
+	distinctCategoryIDs := make(map[int]struct{})
+	for _, show := range shows {
+		for _, id := range show.Categories {
+			_, ok := distinctCategoryIDs[id]
+			if !ok {
+				distinctCategoryIDs[id] = struct{}{}
+				categoryIDS <- id
+			}
+		}
+	}
+	close(categoryIDS)
+	// push category id in channel
 	return nil
 }
-
-func (ctx *CtxShowDetails) GetShowCategories() {
+//GetCategories fetches category details
+// sent in the channel categoryIDs
+func (ctx *CtxShowDetails) GetCategories(categoryIDS chan int) error {
+	categories := make(map[int]Categories)
+	for {
+		id, ok := <-categoryIDS
+		if !ok {
+			break
+		}
+		category := Categories{}
+		queryCategory := bson.M{"id": id}
+		err := app.Ctx.DB.Venues.Find(queryCategory).One(&category)
+		if err != nil {
+			ctx.Error <- err
+			return err
+		}
+		categories[category.ID] = category
+	}
+	return nil
 }
